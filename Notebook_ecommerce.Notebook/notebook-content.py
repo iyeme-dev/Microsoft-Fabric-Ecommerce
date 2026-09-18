@@ -161,3 +161,40 @@ display(web_raw.limit(5))
 
 # MARKDOWN ********************
 
+
+# CELL ********************
+
+customers_raw.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("customers")
+
+orders_raw.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("orders")
+
+payments_raw.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("payments")
+
+support_raw.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("support")
+
+web_raw.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("web")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
