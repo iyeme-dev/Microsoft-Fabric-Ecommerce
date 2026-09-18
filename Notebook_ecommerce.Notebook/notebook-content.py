@@ -40,7 +40,15 @@
 # CELL ********************
 
 from pyspark.sql.functions import *
-from pyspark.sql.types import *
+from pyspark.sql.functions import (
+    col,
+    lower,
+    trim,
+    initcap,
+    when,
+    to_date,
+    regexp_replace
+)
 
 # METADATA ********************
 
@@ -188,6 +196,86 @@ web_raw.write \
     .format("delta") \
     .mode("overwrite") \
     .saveAsTable("web")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# # 3. SILVER LAYER - CLEAN AND STANDARDISE THE DATA
+
+# MARKDOWN ********************
+
+# ## Customer Data - Clean
+
+# CELL ********************
+
+customers = spark.table("customers")
+
+customers_clean = (
+    customers
+
+    # Standardise email
+    .withColumn(
+        "email",
+        lower(trim(col("email")))
+    )
+
+    # Standardise customer names
+    .withColumn(
+        "name",
+        initcap(trim(col("name")))
+    )
+
+    # Standardise gender values
+    .withColumn(
+        "gender",
+        when(
+            lower(trim(col("gender"))).isin("f", "female"),
+            "Female"
+        )
+        .when(
+            lower(trim(col("gender"))).isin("m", "male"),
+            "Male"
+        )
+        .otherwise("Other")
+    )
+
+    # Convert DOB into a proper date
+    .withColumn(
+        "dob",
+        to_date(
+            regexp_replace(col("dob"), "/", "-")
+        )
+    )
+
+    # Standardise location
+    .withColumn(
+        "location",
+        initcap(trim(col("location")))
+    )
+
+    # Remove duplicate customers
+    .dropDuplicates(["customer_id"])
+
+    # Customer ID must exist
+    .dropna(subset=["customer_id"])
+)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+display(customers_clean.limit(10))
 
 # METADATA ********************
 
