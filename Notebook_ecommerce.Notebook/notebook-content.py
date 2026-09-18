@@ -156,3 +156,8 @@ display(web_raw.limit(5))
 
 # MARKDOWN ********************
 
+# # 2. CREATE BRONZE DELTA TABLES
+
+
+# MARKDOWN ********************
+
