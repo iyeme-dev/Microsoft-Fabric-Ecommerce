@@ -492,3 +492,90 @@ payments_clean.write \
 
 # MARKDOWN ********************
 
+# ## Support Ticket Data - Clean
+
+# CELL ********************
+
+support = spark.table("support")
+
+support_clean = (
+    support
+
+    # Standardise ticket dates
+    .withColumn(
+        "ticket_date",
+        to_date(
+            regexp_replace(col("ticket_date"), "/", "-")
+        )
+    )
+
+    # Clean issue type
+    .withColumn(
+        "issue_type",
+        initcap(trim(col("issue_type")))
+    )
+
+    # Clean resolution status
+    .withColumn(
+        "resolution_status",
+        initcap(trim(col("resolution_status")))
+    )
+
+    # Replace placeholder values with NULL
+    .replace(
+        {
+            "Na": None,
+            "N/A": None,
+            "": None
+        },
+        subset=[
+            "issue_type",
+            "resolution_status"
+        ]
+    )
+
+    .dropDuplicates(["ticket_id"])
+
+    .dropna(
+        subset=[
+            "ticket_id",
+            "customer_id",
+            "ticket_date"
+        ]
+    )
+)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+display(support_clean.limit(10))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+support_clean.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("silver_support")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
