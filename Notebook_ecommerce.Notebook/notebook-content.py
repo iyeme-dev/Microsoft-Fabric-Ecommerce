@@ -654,3 +654,181 @@ web_clean.write \
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
+
+# CELL ********************
+
+silver_tables = {
+    "customers": spark.table("silver_customers"),
+    "orders": spark.table("silver_orders"),
+    "payments": spark.table("silver_payments"),
+    "support": spark.table("silver_support"),
+    "web": spark.table("silver_web")
+}
+
+for table_name, df in silver_tables.items():
+    print(f"{table_name}: {df.count()} rows")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# # 4. GOLD LAYER - CUSTOMER 360
+
+# CELL ********************
+
+c = spark.table("silver_customers").alias("c")
+o = spark.table("silver_orders").alias("o")
+p = spark.table("silver_payments").alias("p")
+s = spark.table("silver_support").alias("s")
+w = spark.table("silver_web").alias("w")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Build Customer 360
+
+# CELL ********************
+
+customer360 = (
+    c
+
+    .join(
+        o,
+        col("c.customer_id") == col("o.customer_id"),
+        "left"
+    )
+
+    .join(
+        p,
+        col("c.customer_id") == col("p.customer_id"),
+        "left"
+    )
+
+    .join(
+        s,
+        col("c.customer_id") == col("s.customer_id"),
+        "left"
+    )
+
+    .join(
+        w,
+        col("c.customer_id") == col("w.customer_id"),
+        "left"
+    )
+
+    .select(
+
+        # CUSTOMER
+        col("c.customer_id").alias("customer_id"),
+        col("c.name").alias("name"),
+        col("c.email").alias("email"),
+        col("c.gender").alias("gender"),
+        col("c.dob").alias("dob"),
+        col("c.location").alias("location"),
+
+        # ORDER
+        col("o.order_id").alias("order_id"),
+        col("o.order_date").alias("order_date"),
+        col("o.amount").alias("order_amount"),
+        col("o.status").alias("order_status"),
+
+        # PAYMENT
+        col("p.payment_method").alias("payment_method"),
+        col("p.payment_status").alias("payment_status"),
+        col("p.amount").alias("payment_amount"),
+
+        # SUPPORT
+        col("s.ticket_id").alias("ticket_id"),
+        col("s.issue_type").alias("issue_type"),
+        col("s.ticket_date").alias("ticket_date"),
+        col("s.resolution_status").alias("resolution_status"),
+
+        # WEB
+        col("w.page_viewed").alias("page_viewed"),
+        col("w.device_type").alias("device_type"),
+        col("w.session_time").alias("session_time")
+    )
+)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+display(customer360.limit(20))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+customer360.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("gold_customer360")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Confirm the Gold table
+
+# CELL ********************
+
+gold_customer360 = spark.table("gold_customer360")
+
+display(gold_customer360.limit(20))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+print("Gold table rows:", gold_customer360.count())
+print("Gold table columns:", len(gold_customer360.columns))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+gold_customer360.printSchema()
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
