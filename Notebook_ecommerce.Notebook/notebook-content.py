@@ -39,7 +39,6 @@
 
 # CELL ********************
 
-from pyspark.sql.functions import *
 from pyspark.sql.functions import (
     col,
     lower,
@@ -49,6 +48,7 @@ from pyspark.sql.functions import (
     to_date,
     regexp_replace
 )
+from pyspark.sql.types import DoubleType
 
 # METADATA ********************
 
@@ -276,6 +276,117 @@ customers_clean = (
 # CELL ********************
 
 display(customers_clean.limit(10))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+customers_clean.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("silver_customers")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ## Orders Data - Clean
+
+# MARKDOWN ********************
+
+
+# CELL ********************
+
+orders = spark.table("orders")
+
+orders_clean = (
+    orders
+
+    .withColumn(
+        "order_date",
+        when(
+            col("order_date").rlike(r"^\d{4}/\d{2}/\d{2}$"),
+            to_date(col("order_date"), "yyyy/MM/dd")
+        )
+        .when(
+            col("order_date").rlike(r"^\d{2}-\d{2}-\d{4}$"),
+            to_date(col("order_date"), "dd-MM-yyyy")
+        )
+        .when(
+            col("order_date").rlike(r"^\d{8}$"),
+            to_date(col("order_date"), "yyyyMMdd")
+        )
+        .otherwise(
+            to_date(col("order_date"))
+        )
+    )
+
+    # Convert amount to a numeric value
+    .withColumn(
+        "amount",
+        col("amount").cast(DoubleType())
+    )
+
+    # Negative order amounts are treated as invalid
+    .withColumn(
+        "amount",
+        when(col("amount") < 0, None)
+        .otherwise(col("amount"))
+    )
+
+    # Standardise status
+    .withColumn(
+        "status",
+        initcap(trim(col("status")))
+    )
+
+    # Remove duplicate orders
+    .dropDuplicates(["order_id"])
+
+    # Important fields must exist
+    .dropna(
+        subset=[
+            "order_id",
+            "customer_id",
+            "order_date"
+        ]
+    )
+)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+display(orders_clean.limit(10))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+orders_clean.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("silver_orders")
 
 # METADATA ********************
 
