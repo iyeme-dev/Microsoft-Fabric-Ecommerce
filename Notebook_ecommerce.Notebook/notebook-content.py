@@ -397,3 +397,98 @@ orders_clean.write \
 
 # MARKDOWN ********************
 
+# ## Payments Data - Clean
+
+# CELL ********************
+
+payments = spark.table("payments")
+
+payments_clean = (
+    payments
+
+    # Standardise payment date
+    .withColumn(
+        "payment_date",
+        to_date(
+            regexp_replace(col("payment_date"), "/", "-")
+        )
+    )
+
+    # Standardise payment method
+    .withColumn(
+        "payment_method",
+        initcap(trim(col("payment_method")))
+    )
+
+    .replace(
+        {
+            "Creditcard": "Credit Card",
+            "Credit Card": "Credit Card"
+        },
+        subset=["payment_method"]
+    )
+
+    # Standardise payment status
+    .withColumn(
+        "payment_status",
+        initcap(trim(col("payment_status")))
+    )
+
+    # Convert amount to numeric
+    .withColumn(
+        "amount",
+        col("amount").cast(DoubleType())
+    )
+
+    # Negative payment amounts become NULL
+    .withColumn(
+        "amount",
+        when(col("amount") < 0, None)
+        .otherwise(col("amount"))
+    )
+
+    .dropDuplicates(["payment_id"])
+
+    .dropna(
+        subset=[
+            "payment_id",
+            "customer_id",
+            "payment_date"
+        ]
+    )
+)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+display(payments_clean.limit(10))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+payments_clean.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("silver_payments")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
