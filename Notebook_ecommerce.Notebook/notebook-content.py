@@ -901,3 +901,42 @@ customer_summary.write \
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
+
+# MARKDOWN ********************
+
+# # 5. PIPELINE VALIDATION
+
+# CELL ********************
+
+tables_to_validate = [
+    "customers",
+    "orders",
+    "payments",
+    "support",
+    "web",
+    "silver_customers",
+    "silver_orders",
+    "silver_payments",
+    "silver_support",
+    "silver_web",
+    "gold_customer360",
+    "gold_customer_summary"
+]
+
+for table_name in tables_to_validate:
+    try:
+        df = spark.table(table_name)
+        print(
+            f"{table_name:<25} "
+            f"Rows: {df.count():<10} "
+            f"Columns: {len(df.columns)}"
+        )
+    except Exception as e:
+        print(f"{table_name:<25} ERROR: {e}")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
