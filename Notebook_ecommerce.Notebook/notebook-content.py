@@ -832,3 +832,72 @@ gold_customer360.printSchema()
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
+
+# MARKDOWN ********************
+
+# ## Gold Customer Summary
+
+# CELL ********************
+
+customer_summary = (
+    customer360
+
+    .groupBy(
+        "customer_id",
+        "name",
+        "email",
+        "gender",
+        "dob",
+        "location"
+    )
+
+    .agg(
+        countDistinct("order_id").alias("total_orders"),
+
+        sum("order_amount").alias("total_order_value"),
+
+        avg("order_amount").alias("average_order_value"),
+
+        sum("payment_amount").alias("total_payments"),
+
+        countDistinct("ticket_id").alias("support_tickets"),
+
+        countDistinct("page_viewed").alias("pages_viewed"),
+
+        max("order_date").alias("last_order_date"),
+
+        max("session_time").alias("last_web_activity")
+    )
+)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+display(customer_summary)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+customer_summary.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("gold_customer_summary")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
