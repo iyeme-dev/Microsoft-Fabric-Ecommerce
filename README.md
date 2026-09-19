@@ -250,6 +250,7 @@ It allows report development to use business-ready data rather than connecting d
 ---
 
 ## Power BI Reporting
+![Microsoft Fabric E-commerce Architecture](assets/power-bi-visual.png)
 
 Power BI is used as the final reporting and visualisation layer.
 
