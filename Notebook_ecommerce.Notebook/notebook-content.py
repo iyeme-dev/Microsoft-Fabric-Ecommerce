@@ -579,3 +579,78 @@ support_clean.write \
 
 # MARKDOWN ********************
 
+# ## Web Activity Data - Clean
+
+# MARKDOWN ********************
+
+
+# CELL ********************
+
+web = spark.table("web")
+
+web_clean = (
+    web
+
+    # Standardise session date
+    .withColumn(
+        "session_time",
+        to_date(
+            regexp_replace(col("session_time"), "/", "-")
+        )
+    )
+
+    # Standardise page path
+    .withColumn(
+        "page_viewed",
+        lower(trim(col("page_viewed")))
+    )
+
+    # Standardise device type
+    .withColumn(
+        "device_type",
+        initcap(trim(col("device_type")))
+    )
+
+    .dropDuplicates(["session_id"])
+
+    .dropna(
+        subset=[
+            "session_id",
+            "customer_id",
+            "session_time",
+            "page_viewed"
+        ]
+    )
+)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+display(web_clean.limit(10))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+web_clean.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("silver_web")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
