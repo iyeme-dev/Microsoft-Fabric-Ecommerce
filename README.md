@@ -12,7 +12,7 @@ The project also uses Microsoft Fabric Git integration to version supported work
 
 ## Project Architecture
 
-![Microsoft Fabric E-commerce Architecture](assets/microsoft-fabric-architecture.gif)
+![Microsoft Fabric E-commerce Architecture](assets/mf-architecture.gif)
 ---
 
 ## Technologies Used
